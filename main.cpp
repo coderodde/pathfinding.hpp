@@ -14,6 +14,7 @@ using net::coderodde::pathfinding::heuristic_function;
 using net::coderodde::pathfinding::weight_function;
 using net::coderodde::pathfinding::weighted_path;
 using net::coderodde::pathfinding::find_shortest_path;
+using net::coderodde::pathfinding::path_not_found_exception;
 
 // This is just a sample graph node type. The only requirement for coupling it
 // with the search algorithms is 'bool operator==(const grid_node& other) const'
@@ -171,8 +172,7 @@ void grid_node::set_right_neighbor(grid_node& neighbor)
 
 std::ostream& operator<<(std::ostream& out, const grid_node& gn)
 {
-    out << "grid_node {x=" << gn.m_x << ", y=" << gn.m_y << ", traversable="
-        << std::boolalpha << gn.m_traversable << "}";
+    out << "{x=" << gn.m_x << ", y=" << gn.m_y << "}";
     return out;
 }
 
@@ -265,7 +265,7 @@ public:
     
     matrix_node(size_t id) : m_id{id} {}
     
-    bool operator==(const matrix_node& other) {
+    bool operator==(const matrix_node& other) const {
         return m_id == other.m_id;
     }
     
@@ -424,17 +424,10 @@ int main(int argc, const char * argv[]) {
                     .from(grid_node_maze[0][0])
                     .to(grid_node_maze[6][5])
                     .with_weights(&grid_node_wf)
-        .with_heuristic_function(&grid_node_hf);
-        
-        /*
-        net::coderodde::pathfinding::weighted_path<grid_node, int> path
-        = net::coderodde::pathfinding::
-        search<grid_node, int>(grid_node_maze[0][0],
-                               grid_node_maze[6][5],
-                               grid_node_wf);*/
+                    .with_heuristic_function(&grid_node_hf);
         std::cout << path << "\n";
         std::cout << "Final maze distance: " << path.total_weight() << "\n";
-    } catch (net::coderodde::pathfinding::path_not_found_exception<grid_node>& ex) {
+    } catch (path_not_found_exception<grid_node>& ex) {
         std::cerr << ex.what() << "\n";
     }
     
@@ -462,7 +455,7 @@ int main(int argc, const char * argv[]) {
     matrix_wf[d][e] = mde; d.add_neighbor(e);
     
     try {
-        net::coderodde::pathfinding::weighted_path<matrix_node, matrix> path
+        weighted_path<matrix_node, matrix> path
         = find_shortest_path<matrix_node, matrix>()
             .from(a)
             .to(e)
@@ -471,7 +464,7 @@ int main(int argc, const char * argv[]) {
         
         std::cout << path << "\n";
         std::cout << "Final matrix length: " << path.total_weight() << "\n";
-    } catch (...) {
-        
+    } catch (path_not_found_exception<matrix_node>& ex) {
+        std::cerr << ex.what() << "\n";
     }
 }

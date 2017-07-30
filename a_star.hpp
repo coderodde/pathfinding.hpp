@@ -89,7 +89,7 @@ namespace pathfinding {
             
             if (*current_node == target) {
                 remove_and_delete_all_node_holders(open);
-                return traceback_path(target, parents, w);
+                return traceback_path(*current_node, parents, w);
             }
             
             if (closed.find(current_node) != closed.end()) {
