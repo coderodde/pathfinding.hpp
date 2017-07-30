@@ -65,8 +65,7 @@ namespace pathfinding {
                                        Node& target,
                                        weight_function<Node, Weight>& w,
                                        heuristic_function<Node, Weight>& h) {
-        
-        
+
         auto cmp = [](node_holder<Node, Weight>* nh1,
                       node_holder<Node, Weight>* nh2) {
             return nh1->m_f > nh2->m_f;

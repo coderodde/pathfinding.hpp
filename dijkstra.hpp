@@ -8,8 +8,24 @@ namespace net {
 namespace coderodde {
 namespace pathfinding {
     
-    template<typename Node>
-    struct todo {};
+    template<typename Node, typename DistanceType>
+    class zero_heuristic :
+    public virtual heuristic_function<Node, DistanceType> {
+        
+    public:
+        DistanceType operator()(const Node& target) const {
+            DistanceType zero{};
+            return zero;
+        }
+    };
+    
+    template<typename Node, typename Weight>
+    weighted_path<Node, Weight> search(Node& source,
+                                       Node& target,
+                                       weight_function<Node, Weight>& w) {
+        zero_heuristic<Node, Weight> h;
+        return search(source, target, w, h);
+    }
     
 } // End of namespace net::coderodde::pathfinding.
 } // End of namespace net::coderodde.

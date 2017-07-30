@@ -1,5 +1,6 @@
 #include "a_star.hpp"
 #include "child_node_iterator.hpp"
+#include "dijkstra.hpp"
 #include "heuristic_function.hpp"
 #include "path_not_found_exception.hpp"
 #include "weight_function.hpp"
@@ -348,8 +349,7 @@ int main(int argc, const char * argv[]) {
         = net::coderodde::pathfinding::
         search<grid_node, int>(grid_node_maze[0][0],
                                grid_node_maze[6][5],
-                               grid_node_wf,
-                               grid_node_hf);
+                               grid_node_wf);
         std::cout << path << "\n";
     } catch (net::coderodde::pathfinding::path_not_found_exception<grid_node>& ex) {
         std::cerr << ex.what() << "\n";
