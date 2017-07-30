@@ -1,9 +1,7 @@
-#include "a_star.hpp"
+#include "pathfinding.hpp"
 #include "child_node_iterator.hpp"
-#include "dijkstra.hpp"
-#include "heuristic_function.hpp"
 #include "path_not_found_exception.hpp"
-#include "weight_function.hpp"
+
 #include <cstdlib>
 #include <functional>
 #include <iostream>
@@ -15,6 +13,7 @@ using net::coderodde::pathfinding::child_node_iterator;
 using net::coderodde::pathfinding::heuristic_function;
 using net::coderodde::pathfinding::weight_function;
 using net::coderodde::pathfinding::weighted_path;
+using net::coderodde::pathfinding::find_shortest_path;
 
 // This is just a sample graph node type. The only requirement for coupling it
 // with the search algorithms is 'bool operator==(const grid_node& other) const'
@@ -229,6 +228,8 @@ private:
     int m_b2;
 };
 
+// A graph node type whose edge weights are matrix. This is just a demonstration
+// of flexibility of the library.
 class matrix_node {
 private:
     
@@ -346,7 +347,7 @@ public:
         return m_map[node];
     }
     
-    matrix operator()(const matrix_node& tail, const matrix_node& head) {
+    matrix operator()(const matrix_node& tail, const matrix_node& head) override {
         return m_map[tail][head];
     }
     
@@ -419,11 +420,18 @@ int main(int argc, const char * argv[]) {
     grid_node_heuristic_function grid_node_hf(grid_node_maze[6][5]);
     
     try {
+        auto path = find_shortest_path<grid_node, int>()
+                    .from(grid_node_maze[0][0])
+                    .to(grid_node_maze[6][5])
+                    .with_weights(&grid_node_wf)
+        .with_heuristic_function(&grid_node_hf);
+        
+        /*
         net::coderodde::pathfinding::weighted_path<grid_node, int> path
         = net::coderodde::pathfinding::
         search<grid_node, int>(grid_node_maze[0][0],
                                grid_node_maze[6][5],
-                               grid_node_wf);
+                               grid_node_wf);*/
         std::cout << path << "\n";
         std::cout << "Final maze distance: " << path.total_weight() << "\n";
     } catch (net::coderodde::pathfinding::path_not_found_exception<grid_node>& ex) {
@@ -455,7 +463,12 @@ int main(int argc, const char * argv[]) {
     
     try {
         net::coderodde::pathfinding::weighted_path<matrix_node, matrix> path
-        = net::coderodde::pathfinding::search<matrix_node, matrix>(a, e, matrix_wf);
+        = find_shortest_path<matrix_node, matrix>()
+            .from(a)
+            .to(e)
+            .with_weights(&matrix_wf)
+            .without_heuristic_function();
+        
         std::cout << path << "\n";
         std::cout << "Final matrix length: " << path.total_weight() << "\n";
     } catch (...) {
