@@ -20,6 +20,10 @@ namespace pathfinding {
             return *m_path_vector->at(index);
         }
         
+        Weight total_weight() const {
+            return m_total_weight;
+        }
+        
     private:
         std::vector<Node*> m_path_vector;
         Weight             m_total_weight;

@@ -425,6 +425,7 @@ int main(int argc, const char * argv[]) {
                                grid_node_maze[6][5],
                                grid_node_wf);
         std::cout << path << "\n";
+        std::cout << "Final maze distance: " << path.total_weight() << "\n";
     } catch (net::coderodde::pathfinding::path_not_found_exception<grid_node>& ex) {
         std::cerr << ex.what() << "\n";
     }
@@ -445,17 +446,18 @@ int main(int argc, const char * argv[]) {
     matrix mce{4,   0,  1, 3};
     matrix mde{1, -10,  9, 2};
     
-    matrix_wf[a][b] = mab;
-    matrix_wf[a][c] = mac;
-    matrix_wf[b][c] = mbc;
-    matrix_wf[c][d] = mcd;
-    matrix_wf[c][e] = mce;
-    matrix_wf[d][e] = mde;
+    matrix_wf[a][b] = mab; a.add_neighbor(b);
+    matrix_wf[a][c] = mac; a.add_neighbor(c);
+    matrix_wf[b][c] = mbc; b.add_neighbor(c);
+    matrix_wf[c][d] = mcd; c.add_neighbor(d);
+    matrix_wf[c][e] = mce; c.add_neighbor(e);
+    matrix_wf[d][e] = mde; d.add_neighbor(e);
     
     try {
         net::coderodde::pathfinding::weighted_path<matrix_node, matrix> path
         = net::coderodde::pathfinding::search<matrix_node, matrix>(a, e, matrix_wf);
         std::cout << path << "\n";
+        std::cout << "Final matrix length: " << path.total_weight() << "\n";
     } catch (...) {
         
     }
