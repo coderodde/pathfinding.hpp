@@ -77,7 +77,7 @@ namespace pathfinding {
         
         std::unordered_set<Node*> closed;
         std::unordered_map<Node*, Node*> parents;
-        std::unordered_map<Node*, int> distances;
+        std::unordered_map<Node*, Weight> distances;
         
         open.push(new node_holder<Node, Weight>(&source, Weight{}));
         parents[&source] = nullptr;

@@ -9,7 +9,7 @@ namespace pathfinding {
     class weight_function {
         
     public:
-        virtual WeightType operator()(const Node& a, const Node& b) const = 0;
+        virtual WeightType operator()(const Node& a, const Node& b) = 0;
     };
     
 } // End of namespace net::coderodde::pathfinding.

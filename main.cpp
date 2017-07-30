@@ -16,6 +16,9 @@ using net::coderodde::pathfinding::heuristic_function;
 using net::coderodde::pathfinding::weight_function;
 using net::coderodde::pathfinding::weighted_path;
 
+// This is just a sample graph node type. The only requirement for coupling it
+// with the search algorithms is 'bool operator==(const grid_node& other) const'
+// and 'begin()' + 'end()' for iterating over the child nodes.
 class grid_node {
 private:
     
@@ -111,10 +114,17 @@ public:
         return grid_node_neighbor_iterator(nullptr, neighbor_count);
     }
     
+    // Heuristic function must know the coordinates:
     friend class grid_node_heuristic_function;
+    
+    // For printing to, say, cout:
     friend std::ostream& operator<<(std::ostream& out, const grid_node& gn);
+    
+    // std::hash and std::equal_to so that the internal unordered_* data
+    // structures may work with grid nodes via pointers:
     friend class std::hash<grid_node*>;
     friend class std::equal_to<grid_node*>;
+    
 private:
     
     int m_x;
@@ -126,9 +136,6 @@ private:
     grid_node* m_bottom_neighbor;
     grid_node* m_left_neighbor;
     grid_node* m_right_neighbor;
-    
-    friend size_t grid_node_hash(const grid_node& node);
-    friend bool operator==(const grid_node& node1, const grid_node& node2);
 };
 
 grid_node::grid_node(int x, int y, bool traversable)
@@ -170,6 +177,7 @@ std::ostream& operator<<(std::ostream& out, const grid_node& gn)
     return out;
 }
 
+// This class will be used as an EDGE WEIGHT:
 class matrix {
 public:
     matrix(int a1, int a2, int b1, int b2)
@@ -180,10 +188,30 @@ public:
     m_b2{b2}
     {}
     
-    int determinant() {
+    matrix() : matrix{0, 0, 0, 0} {}
+    
+    int determinant() const {
         return m_a1 * m_b2 - m_a2 * m_b1;
     }
     
+    matrix operator+(const matrix& other) {
+        return matrix{m_a1 + other.m_a1,
+                      m_a2 + other.m_a2,
+                      m_b1 + other.m_b1,
+                      m_b2 + other.m_b2};
+    }
+    
+    matrix& operator+=(const matrix& other) {
+        m_a1 += other.m_a1;
+        m_a2 += other.m_a2;
+        m_b1 += other.m_b1;
+        m_b2 += other.m_b2;
+        return *this;
+    }
+    
+    bool operator>(const matrix& other) {
+        return abs(determinant()) > abs(other.determinant());
+    }
     
     friend std::ostream& operator<<(std::ostream& out, const matrix& m) {
         return out << "{{" << m.m_a1 << ", " << m.m_a2 << "}, {"
@@ -236,6 +264,10 @@ public:
     
     matrix_node(size_t id) : m_id{id} {}
     
+    bool operator==(const matrix_node& other) {
+        return m_id == other.m_id;
+    }
+    
     void add_neighbor(matrix_node& neighbor) {
         m_neighbors.push_back(&neighbor);
     }
@@ -250,15 +282,39 @@ public:
     
 private:
     
+    friend class std::hash<matrix_node>;
+    friend class std::equal_to<matrix_node>;
+    friend std::ostream& operator<<(std::ostream& out, const matrix_node& n);
+    
     std::vector<matrix_node*> m_neighbors;
     size_t m_id;
 };
+
+std::ostream& operator<<(std::ostream& out, const matrix_node& node) {
+    return out << "{id=" << node.m_id << "}";
+}
+
+namespace std {
+    template<>
+    struct hash<matrix_node> {
+        std::size_t operator()(const matrix_node& node) const {
+            return node.m_id;
+        }
+    };
+    
+    template<>
+    struct equal_to<matrix_node> {
+        bool operator()(const matrix_node& a, const matrix_node& b) const {
+            return a.m_id == b.m_id;
+        }
+    };
+}
 
 class grid_node_weight_function :
 public virtual weight_function<grid_node, int>
 {
 public:
-    int operator()(const grid_node& a, const grid_node& b) const {
+    int operator()(const grid_node& a, const grid_node& b) {
         return 1;
     }
 };
@@ -279,6 +335,24 @@ public:
     
 private:
     grid_node m_source;
+};
+
+class matrix_node_weight_function :
+public virtual weight_function<matrix_node, matrix>
+{
+public:
+    std::unordered_map<matrix_node, matrix>&
+    operator[](const matrix_node& node) {
+        return m_map[node];
+    }
+    
+    matrix operator()(const matrix_node& tail, const matrix_node& head) {
+        return m_map[tail][head];
+    }
+    
+private:
+    std::unordered_map<matrix_node,
+    std::unordered_map<matrix_node, matrix>> m_map;
 };
 
 namespace std {
@@ -353,5 +427,36 @@ int main(int argc, const char * argv[]) {
         std::cout << path << "\n";
     } catch (net::coderodde::pathfinding::path_not_found_exception<grid_node>& ex) {
         std::cerr << ex.what() << "\n";
+    }
+    
+    ////////// MATRIX DEMO ///////////
+    matrix_node a{1};
+    matrix_node b{2};
+    matrix_node c{3};
+    matrix_node d{4};
+    matrix_node e{5};
+    
+    matrix_node_weight_function matrix_wf;
+    
+    matrix mab{1,   2,  3, 4};
+    matrix mac{1,  -2, -3, 4};
+    matrix mbc{2,   2,  1, 3};
+    matrix mcd{5,  10,  7, 8};
+    matrix mce{4,   0,  1, 3};
+    matrix mde{1, -10,  9, 2};
+    
+    matrix_wf[a][b] = mab;
+    matrix_wf[a][c] = mac;
+    matrix_wf[b][c] = mbc;
+    matrix_wf[c][d] = mcd;
+    matrix_wf[c][e] = mce;
+    matrix_wf[d][e] = mde;
+    
+    try {
+        net::coderodde::pathfinding::weighted_path<matrix_node, matrix> path
+        = net::coderodde::pathfinding::search<matrix_node, matrix>(a, e, matrix_wf);
+        std::cout << path << "\n";
+    } catch (...) {
+        
     }
 }
