@@ -63,6 +63,7 @@ namespace pathfinding {
     template<typename Node, typename Weight>
     weighted_path<Node, Weight> search(Node& source,
                                        Node& target,
+                                       
                                        weight_function<Node, Weight>& w,
                                        heuristic_function<Node, Weight>& h) {
 
@@ -84,27 +85,27 @@ namespace pathfinding {
         distances[&source] = Weight{};
         
         while (!open.empty()) {
-            Node* current_node = open.top()->m_node;
+            Node& current_node = *open.top()->m_node;
             open.pop();
             
-            if (*current_node == target) {
+            if (current_node == target) {
                 remove_and_delete_all_node_holders(open);
-                return traceback_path(*current_node, parents, w);
+                return traceback_path(current_node, parents, w);
             }
             
-            if (closed.find(current_node) != closed.end()) {
+            if (closed.find(&current_node) != closed.end()) {
                 continue;
             }
             
-            closed.insert(current_node);
+            closed.insert(&current_node);
             
-            for (Node& child_node : *current_node) {
+            for (Node& child_node : current_node) {
                 if (closed.find(&child_node) != closed.end()) {
                     continue;
                 }
                 
-                Weight tentative_distance = distances[current_node] +
-                w(*current_node, child_node);
+                Weight tentative_distance = distances[&current_node] +
+                w(current_node, child_node);
                 
                 if (distances.find(&child_node) == distances.end()
                     || distances[&child_node] > tentative_distance) {
@@ -112,7 +113,7 @@ namespace pathfinding {
                                         &child_node,
                                         tentative_distance + h(child_node)));
                     distances[&child_node] = tentative_distance;
-                    parents[&child_node] = current_node;
+                    parents[&child_node] = &current_node;
                 }
             }
         }

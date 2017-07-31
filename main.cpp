@@ -1,5 +1,6 @@
 #include "pathfinding.hpp"
 #include "child_node_iterator.hpp"
+#include "forward_node_expander.hpp"
 #include "path_not_found_exception.hpp"
 
 #include <cstdlib>
@@ -13,8 +14,9 @@ using net::coderodde::pathfinding::child_node_iterator;
 using net::coderodde::pathfinding::heuristic_function;
 using net::coderodde::pathfinding::weight_function;
 using net::coderodde::pathfinding::weighted_path;
-using net::coderodde::pathfinding::find_shortest_path;
+using net::coderodde::pathfinding::forward_node_expander;
 using net::coderodde::pathfinding::path_not_found_exception;
+using net::coderodde::pathfinding::find_shortest_path;
 
 // This is just a sample graph node type. The only requirement for coupling it
 // with the search algorithms is 'bool operator==(const grid_node& other) const'
@@ -136,6 +138,18 @@ private:
     grid_node* m_bottom_neighbor;
     grid_node* m_left_neighbor;
     grid_node* m_right_neighbor;
+    
+    friend class grid_node_forward_node_expander;
+};
+
+class grid_node_forward_node_expander:
+public virtual forward_node_expander<grid_node> {
+public:
+    
+    
+private:
+    
+    grid_node* m_grid_node;
 };
 
 grid_node::grid_node(int x, int y, bool traversable)
